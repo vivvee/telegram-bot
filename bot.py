@@ -167,3 +167,18 @@ app.add_handler(
 if __name__ == "__main__":
     print("Бот запускается...")
     app.run_polling()
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import threading
+
+class Handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Bot is running")
+
+def run_server():
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(("0.0.0.0", port), Handler)
+    server.serve_forever()
+
+threading.Thread(target=run_server).start()
