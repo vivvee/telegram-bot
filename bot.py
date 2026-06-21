@@ -7,7 +7,9 @@ from telegram.ext import (
     filters,
 )
 
-TOKEN = "7950047868:AAFD53qMfDuWP7kag-UKCuBopvBDaAOpXv4"
+import os
+
+TOKEN = os.getenv("TOKEN")
 
 # 👉 сюда вставишь свой Telegram ID (мы его получим ниже)
 ADMIN_CHAT_ID = 1137467971
