@@ -164,4 +164,16 @@ app.add_handler(CommandHandler("start", start))
 app.add_handler(MessageHandler(filters.Document.ALL | filters.PHOTO, handle_file))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
 
-app.run_polling()
+import asyncio
+
+async def main():
+    await app.initialize()
+    await app.start()
+    await app.updater.start_polling()
+
+    # держим процесс живым
+    while True:
+        await asyncio.sleep(3600)
+
+if __name__ == "__main__":
+    asyncio.run(main())
