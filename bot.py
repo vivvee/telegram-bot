@@ -1,3 +1,4 @@
+import os
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import (
     ApplicationBuilder,
@@ -6,21 +7,21 @@ from telegram.ext import (
     ContextTypes,
     filters,
 )
-import os
 
-# 🔐 Токен берётся из переменной окружения
+# 🔐 ENV переменные (Railway)
 TOKEN = os.getenv("TOKEN")
+ADMIN_CHAT_ID = int(os.getenv("ADMIN_CHAT_ID", "0"))
 
 if not TOKEN:
-    raise ValueError("Переменная окружения TOKEN не найдена!")
+    raise ValueError("TOKEN не найден в ENV переменных")
 
-# 👤 Твой Telegram ID
-ADMIN_CHAT_ID = 1137467971
+if ADMIN_CHAT_ID == 0:
+    raise ValueError("ADMIN_CHAT_ID не найден в ENV переменных")
 
-# Хранение состояния пользователей
+# 🧠 состояние пользователей
 user_state = {}
 
-# Кнопки меню
+# 📌 клавиатура
 keyboard = ReplyKeyboardMarkup(
     [
         ["📄 Услуги", "⏱ Сроки"],
@@ -31,32 +32,34 @@ keyboard = ReplyKeyboardMarkup(
     resize_keyboard=True,
 )
 
-# /start
+# 🚀 START
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "Привет! Я бот бюро присяжных переводов 📄\n"
-        "Выберите, что вас интересует:",
+        "Выберите нужный раздел:",
         reply_markup=keyboard,
     )
 
-# Обработка файлов
+# 📎 ФАЙЛЫ
 async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
 
     if update.message.document:
         file_type = "PDF/документ"
+        file_id = update.message.document.file_id
     elif update.message.photo:
         file_type = "Фото"
+        file_id = update.message.photo[-1].file_id
     else:
         return
 
-    # Ответ клиенту
+    # клиенту
     await update.message.reply_text(
         "Файл получен 📄\n"
         "Мы проверим его и свяжемся с вами."
     )
 
-    # Уведомление админу
+    # админу
     await context.bot.send_message(
         chat_id=ADMIN_CHAT_ID,
         text=(
@@ -66,72 +69,62 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ),
     )
 
-    # Пересылаем файл
+    # пересылка файла
     if update.message.document:
-        await context.bot.send_document(
-            chat_id=ADMIN_CHAT_ID,
-            document=update.message.document.file_id,
-        )
+        await context.bot.send_document(ADMIN_CHAT_ID, file_id)
+    else:
+        await context.bot.send_photo(ADMIN_CHAT_ID, file_id)
 
-    elif update.message.photo:
-        await context.bot.send_photo(
-            chat_id=ADMIN_CHAT_ID,
-            photo=update.message.photo[-1].file_id,
-        )
-
-# Обработка текста
+# 💬 ТЕКСТ
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     user_id = update.effective_user.id
 
     if text == "📄 Услуги":
         await update.message.reply_text(
-            "Мы выполняем присяжные переводы в Испании:\n"
-            "• свидетельства\n"
-            "• дипломы\n"
-            "• справки\n"
-            "• юридические документы"
+            "Присяжные переводы в Испании:\n"
+            "• свидетельства\n• дипломы\n• справки\n• документы"
         )
 
     elif text == "⏱ Сроки":
         await update.message.reply_text(
-            "Сроки выполнения:\n"
-            "• 1–3 рабочих дня — стандартные документы\n"
-            "• до 5–7 дней — сложные случаи\n\n"
-            "Точный срок сообщим после проверки документов."
+            "Сроки:\n"
+            "• 1–3 дня стандартные документы\n"
+            "• 5–7 дней сложные случаи\n\n"
+            "Точный срок после проверки."
         )
 
     elif text == "💶 Стоимость":
         await update.message.reply_text(
-            "Стоимость начинается от XX €.\n"
-            "Точную цену сообщим после проверки документов."
+            "Стоимость от XX €\n"
+            "Точная цена после анализа документов."
         )
 
     elif text == "📘 Апостиль":
         await update.message.reply_text(
-            "Мы помогаем оформить апостиль и выполнить присяжный перевод."
+            "Помогаем оформить апостиль и перевод в Испании."
         )
 
     elif text == "💬 Консультация":
         await update.message.reply_text(
-            "Напишите свой вопрос, и мы обязательно ответим."
+            "Опишите ваш вопрос — мы ответим 💬"
         )
 
     elif text == "📍 Контакты":
         await update.message.reply_text(
-            "Напишите нам прямо здесь, в Telegram."
+            "Напишите нам прямо в чат 📩"
         )
 
     elif text == "⚡ Срочный заказ":
         await update.message.reply_text(
-            "⚡ Срочный заказ принят.\n"
-            "Мы обработаем его в приоритетном порядке."
+            "⚡ Срочный заказ принят\n"
+            "Будет обработан в приоритетном порядке."
         )
 
     elif text == "📎 Оставить заявку":
         user_state[user_id] = "waiting_doc"
         await update.message.reply_text(
-            "Отправьте фотографию или PDF документа."
+            "Отправьте документ (PDF или фото) 📄"
         )
 
     elif user_state.get(user_id) == "waiting_doc":
@@ -143,42 +136,25 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif user_state.get(user_id) == "waiting_lang":
         user_state[user_id] = "done"
         await update.message.reply_text(
-            "Спасибо! ✅\n"
-            "Мы получили заявку и скоро свяжемся с вами."
+            "Заявка принята ✅\n"
+            "Мы свяжемся с вами."
         )
 
     else:
-        await update.message.reply_text(
-            "Выберите пункт меню ниже 👇"
-        )
+        await update.message.reply_text("Выберите пункт меню 👇")
 
-# Создание приложения
-app = ApplicationBuilder().token(TOKEN).build()
 
-app.add_handler(CommandHandler("start", start))
-app.add_handler(
-    MessageHandler(filters.Document.ALL | filters.PHOTO, handle_file)
-)
-app.add_handler(
-    MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text)
-)
+# 🧩 СБОРКА БОТА
+def main():
+    app = ApplicationBuilder().token(TOKEN).build()
 
-# Запуск
-if __name__ == "__main__":
-    print("Бот запускается...")
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.Document.ALL | filters.PHOTO, handle_file))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
+
+    print("🤖 Bot started...")
     app.run_polling()
-from http.server import BaseHTTPRequestHandler, HTTPServer
-import threading
 
-class Handler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b"Bot is running")
 
-def run_server():
-    port = int(os.environ.get("PORT", 10000))
-    server = HTTPServer(("0.0.0.0", port), Handler)
-    server.serve_forever()
-
-threading.Thread(target=run_server).start()
+if __name__ == "__main__":
+    main()
