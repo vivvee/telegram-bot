@@ -21,13 +21,26 @@ if ADMIN_CHAT_ID == 0:
 # 🧠 состояние пользователей
 user_state = {}
 
-# 📌 клавиатура
+# 📌 клавиатура (главное меню)
 keyboard = ReplyKeyboardMarkup(
     [
         ["📄 Услуги", "⏱ Сроки"],
         ["📎 Оформить заявку", "💶 Стоимость"],
         ["💬 Консультация", "📍 Контакты"],
         ["❓ FAQ"],
+    ],
+    resize_keyboard=True,
+)
+
+# 📌 клавиатура FAQ
+faq_keyboard = ReplyKeyboardMarkup(
+    [
+        ["📄 Как сделать скан документа"],
+        ["📘 Про апостиль"],
+        ["✍️ Электронная подпись переводчика"],
+        ["💳 Оплата"],
+        ["📬 Получение перевода"],
+        ["⬅️ Назад в меню"],
     ],
     resize_keyboard=True,
 )
@@ -100,8 +113,6 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Точная цена после анализа документов."
         )
 
-   
-
     elif text == "💬 Консультация":
         await update.message.reply_text(
             "👉 https://t.me/your_manager_username"
@@ -112,9 +123,51 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Напишите нам прямо в чат 📩"
         )
 
+    # ❓ FAQ вход
     elif text == "❓ FAQ":
         await update.message.reply_text(
-            "FAQ скоро будет добавлен 📌"
+            "Выберите вопрос 👇",
+            reply_markup=faq_keyboard,
+        )
+
+    # 📌 FAQ ответы
+    elif text == "📄 Как сделать скан документа":
+        await update.message.reply_text(
+            "Скан должен быть:\n"
+            "• цветной\n"
+            "• читаемый\n"
+            "• без обрезанных краёв\n"
+            "• PDF или качественное фото"
+        )
+
+    elif text == "📘 Про апостиль":
+        await update.message.reply_text(
+            "Апостиль — это международное заверение документа,\n"
+            "которое подтверждает его юридическую силу за границей."
+        )
+
+    elif text == "✍️ Электронная подпись переводчика":
+        await update.message.reply_text(
+            "Присяжный перевод в Испании заверяется электронной подписью переводчика.\n"
+            "Она подтверждает юридическую силу перевода."
+        )
+
+    elif text == "💳 Оплата":
+        await update.message.reply_text(
+            "Оплата производится после оценки документа.\n"
+            "Точная стоимость сообщается заранее."
+        )
+
+    elif text == "📬 Получение перевода":
+        await update.message.reply_text(
+            "Готовый перевод вы получаете в PDF на email или в мессенджере.\n"
+            "При необходимости возможна печатная версия."
+        )
+
+    elif text == "⬅️ Назад в меню":
+        await update.message.reply_text(
+            "Главное меню 👇",
+            reply_markup=keyboard,
         )
 
     # 🧾 ОФОРМЛЕНИЕ ЗАЯВКИ — ШАГ 1
@@ -124,7 +177,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "С какого языка требуется перевод? 🌍"
         )
 
-    # 🧾 ШАГ 2 — язык получен
+    # 🧾 ШАГ 2 — язык
     elif user_state.get(user_id) == "waiting_lang_before_doc":
         user_state[user_id] = "waiting_doc"
         user_state[f"{user_id}_lang"] = text
@@ -136,6 +189,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # 🧾 ШАГ 3 — финал
     elif user_state.get(user_id) == "waiting_doc":
         user_state[user_id] = "done"
+
         await update.message.reply_text(
             "Заявка принята ✅\n"
             "Мы свяжемся с вами."
