@@ -27,7 +27,7 @@ keyboard = ReplyKeyboardMarkup(
         ["📄 Услуги", "⏱ Сроки"],
         ["📎 Оформить заявку", "💶 Стоимость"],
         ["💬 Консультация", "📍 Контакты"],
-        ["📘 Апостиль", "❓ FAQ"],
+        ["❓ FAQ"],
     ],
     resize_keyboard=True,
 )
@@ -100,10 +100,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Точная цена после анализа документов."
         )
 
-    elif text == "📘 Апостиль":
-        await update.message.reply_text(
-            "Помогаем оформить апостиль и перевод в Испании."
-        )
+   
 
     elif text == "💬 Консультация":
         await update.message.reply_text(
