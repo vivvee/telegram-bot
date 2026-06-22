@@ -25,9 +25,9 @@ user_state = {}
 keyboard = ReplyKeyboardMarkup(
     [
         ["📄 Услуги", "⏱ Сроки"],
-        ["📎 Оставить заявку", "💶 Стоимость"],
+        ["📎 Оформить заявку", "💶 Стоимость"],
         ["💬 Консультация", "📍 Контакты"],
-        ["📘 Апостиль", "⚡ Срочный заказ"],
+        ["📘 Апостиль", "❓ FAQ"],
     ],
     resize_keyboard=True,
 )
@@ -107,7 +107,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif text == "💬 Консультация":
         await update.message.reply_text(
-            "Опишите ваш вопрос — мы ответим 💬"
+            "👉 https://t.me/your_manager_username"
         )
 
     elif text == "📍 Контакты":
@@ -115,25 +115,29 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Напишите нам прямо в чат 📩"
         )
 
-    elif text == "⚡ Срочный заказ":
+    elif text == "❓ FAQ":
         await update.message.reply_text(
-            "⚡ Срочный заказ принят\n"
-            "Будет обработан в приоритетном порядке."
+            "FAQ скоро будет добавлен 📌"
         )
 
-    elif text == "📎 Оставить заявку":
+    # 🧾 ОФОРМЛЕНИЕ ЗАЯВКИ — ШАГ 1
+    elif text == "📎 Оформить заявку":
+        user_state[user_id] = "waiting_lang_before_doc"
+        await update.message.reply_text(
+            "С какого языка требуется перевод? 🌍"
+        )
+
+    # 🧾 ШАГ 2 — язык получен
+    elif user_state.get(user_id) == "waiting_lang_before_doc":
         user_state[user_id] = "waiting_doc"
+        user_state[f"{user_id}_lang"] = text
+
         await update.message.reply_text(
-            "Отправьте документ (PDF или фото) 📄"
+            "Отлично 👍\nТеперь отправьте документ (PDF или фото) 📄"
         )
 
+    # 🧾 ШАГ 3 — финал
     elif user_state.get(user_id) == "waiting_doc":
-        user_state[user_id] = "waiting_lang"
-        await update.message.reply_text(
-            "На какой язык нужен перевод?"
-        )
-
-    elif user_state.get(user_id) == "waiting_lang":
         user_state[user_id] = "done"
         await update.message.reply_text(
             "Заявка принята ✅\n"
